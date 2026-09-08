@@ -1,0 +1,11 @@
+{
+  "title": "Access Proof A",
+  "slug": "access-proof-a",
+  "description": "A minimal internal demonstration that platform sign-in works: it shows the signed-in person's display name and role in this app, and exercises one protected route and one admin-only route that both refuse unauthorised callers on the server.",
+  "runtime_shape": "identity",
+  "data_reach": "own",
+  "blast_radius": "low",
+  "scopes": ["read:own-identity", "read:proof-message", "read:proof-admin-message"],
+  "tier": "amber",
+  "rationale": "Invented content only, no new collections, no writes to any system of record, no outbound calls, no schedule, and nothing persisted or logged about callers, which would otherwise make it green. Amber because it reads and displays a real identifiable person's display name and role from the platform identity system, and the higher of two candidate tiers is the one to take."
+}
