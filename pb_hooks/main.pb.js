@@ -1,31 +1,53 @@
 /// <reference path="../pb_data/types.d.ts" />
 /*
- * main.pb.js — server-side hooks for {{SLUG}}. THIS FILE RUNS ON THE SERVER.
+ * main.pb.js — server-side hooks for access-proof-a. THIS FILE RUNS ON THE SERVER.
  *
- * Runtime is PocketBase 0.39's embedded Goja VM: no npm, no Node APIs, no async.
- * You get PocketBase's own helpers — $app, routerAdd, cronAdd, onRecordCreate,
- * $os.getenv and so on. Docs: https://pocketbase.io/docs/js-overview/
+ * Two read-only routes, and nothing else. Both return fixed invented text: neither
+ * echoes anything about the caller, neither reads or writes a collection, and neither
+ * records who called. The refusals are the point of the app, so they happen here
+ * rather than in the browser, where they would be decoration.
  *
- * Two rules that are enforced by CI, not just style:
- *
- * 1. Handlers run in ISOLATED POOLED VMs. Nothing at the top level of this file is
- *    visible inside a handler — not functions, and not consts either. Shared code
- *    lives in pb_hooks/lib/*.js and is pulled in INSIDE each handler:
- *
- *      routerAdd("GET", "/api/things", (e) => {
- *        const things = require(__hooks + "/lib/things.js");
- *        return e.json(200, things.list(e.app));
- *      });
- *
- * 2. The app may only do what spec.json says it does. Outbound network calls,
- *    scheduled jobs and process access each require a matching declaration in the
- *    spec — see AGENT.md for exactly which. Adding the capability without adding
- *    the declaration fails the build, and so does the reverse of that trade:
- *    quietly widening the spec to match code the reviewer never agreed to.
- *
- * Runtime configuration arrives as environment variables, read with
- * $os.getenv("MY_KEY"). Never commit a secret to this repo — it is public.
+ * Handlers run in isolated pooled VMs, so the shared role check is required inside
+ * each one from lib/proof.js.
  */
 
-// Nothing yet. Delete this comment when the app grows a server side; an app that
-// needs no hooks should ship this file empty rather than pretend otherwise.
+// Any authenticated user of this app may read this. Unauthenticated callers are
+// refused by the server, whatever the page in front of it does.
+routerAdd("GET", "/api/proof/message", (e) => {
+  const proof = require(__hooks + "/lib/proof.js");
+
+  if (!proof.callerRole(e)) {
+    return e.json(401, {
+      error: "sign in to read the protected example message",
+    });
+  }
+
+  return e.json(200, {
+    message: "Demonstration crate SC-1180 cleared the imaginary quarantine bay at 09:14. Invented content, no real consignment exists.",
+    audience: "any signed-in user of this app",
+  });
+});
+
+// Admins of this app only. Ordinary users get 403 and unauthenticated callers 401,
+// and the difference between the two is decided by the server-set role on the auth
+// record, not by anything the request carries.
+routerAdd("GET", "/api/proof/admin", (e) => {
+  const proof = require(__hooks + "/lib/proof.js");
+  const role = proof.callerRole(e);
+
+  if (!role) {
+    return e.json(401, {
+      error: "sign in to read the admin-only example message",
+    });
+  }
+  if (role !== "admin") {
+    return e.json(403, {
+      error: "this example message is for admins of this app only",
+    });
+  }
+
+  return e.json(200, {
+    message: "Demonstration rota: the imaginary night shift is two people short on Thursday. Invented content, no real rota exists.",
+    audience: "admins of this app only",
+  });
+});

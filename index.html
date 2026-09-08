@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{TITLE}}</title>
-<meta name="description" content="{{DESCRIPTION}}">
+<title>Access Proof A</title>
+<meta name="description" content="A minimal internal demonstration that platform sign-in works: it shows the signed-in person's display name and role in this app, and exercises one protected route and one admin-only route that both refuse unauthorised callers on the server.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%2316A45A' fill-rule='evenodd' d='M26 6h48a20 20 0 0 1 20 20v48a20 20 0 0 1-20 20H26A20 20 0 0 1 6 74V26A20 20 0 0 1 26 6Zm24 28a16 16 0 1 0 0 32 16 16 0 0 0 0-32Z'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,12 +24,21 @@
 .stage { max-width: var(--content-max); margin: 0 auto; padding: var(--space-6); }
 .stage h1 { font-family: var(--font-display); font-size: var(--text-2xl); font-weight: 700; letter-spacing: -0.02em; margin: 0 0 var(--space-2); }
 .stage .lede { color: var(--text-muted); font-size: var(--text-base); margin: 0 0 var(--space-6); max-width: 62ch; }
+.stack { display: grid; gap: var(--space-4); }
+.idrow { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); }
+.idrow dt { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); margin: 0 0 var(--space-1); }
+.idrow dd { margin: 0; font-size: var(--text-lg); }
+.runhead { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); }
+.runhead h3 { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 600; margin: 0; }
+.runhead .btn { margin-left: auto; }
+.result { display: grid; gap: var(--space-2); margin-top: var(--space-3); }
+.result pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
 </style>
 </head>
 <body>
 
 <header class="topbar">
-  <a class="brand" href="./"><span class="brand-mark"></span><span>{{TITLE}}</span></a>
+  <a class="brand" href="./"><span class="brand-mark"></span><span>Access Proof A</span></a>
   <div style="margin-left:auto"></div>
   <!-- Identity. Everyone here has already been let in by the identity provider, so
        this says who they are; it is not the access check. -->
@@ -40,14 +49,75 @@
 </header>
 
 <main class="stage">
-  <h1>{{TITLE}}</h1>
-  <p class="lede">{{DESCRIPTION}}</p>
+  <h1>Access proof A</h1>
+  <p class="lede">An acceptance test for platform identity, not a business tool. Sign in with your granted account, check that this app knows who you are and what role you hold, then call the two protected routes and watch the server allow or refuse them. Every message below is invented.</p>
 
-  <div class="card card--pad">
-    <div class="empty">
-      <h4>Nothing here yet</h4>
-      <p>Replace this starter with the app itself. Keep the design system, drop the scaffolding.</p>
-    </div>
+  <div class="stack">
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Who the server thinks you are</h2>
+          <p class="panel-sub">Supplied by the platform identity system at sign-in. Your role is set server-side from your grant, so nothing in this page can change it.</p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="empty" id="identity-empty">
+          <h4>Not signed in</h4>
+          <p>Sign in with an account that has been granted access to this app.</p>
+          <button class="btn btn--primary" id="sign-in-body">Sign in</button>
+        </div>
+        <dl class="idrow" id="identity-detail" hidden>
+          <div>
+            <dt>Display name</dt>
+            <dd id="id-name">—</dd>
+          </div>
+          <div>
+            <dt>Role in this app</dt>
+            <dd><span class="badge" id="id-role">—</span></dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Protected routes</h2>
+          <p class="panel-sub">Both refusals are decided by the server. Running these while signed out, or running the admin one as an ordinary user, is a valid part of the test — the refusal is the result.</p>
+        </div>
+      </div>
+      <div class="panel-body stack">
+
+        <div class="card card--pad">
+          <div class="runhead">
+            <h3>Any signed-in user</h3>
+            <code class="code">GET /api/proof/message</code>
+            <button class="btn btn--secondary btn--sm" data-run="/api/proof/message" data-target="result-message">Run</button>
+          </div>
+          <p class="t-muted">Returns an invented example message to any authenticated user of this app, and 401 to anyone else.</p>
+          <div class="result" id="result-message" hidden>
+            <div><span class="badge" data-role="status">—</span></div>
+            <pre class="code" data-role="body"></pre>
+          </div>
+        </div>
+
+        <div class="card card--pad">
+          <div class="runhead">
+            <h3>Admins of this app only</h3>
+            <code class="code">GET /api/proof/admin</code>
+            <button class="btn btn--secondary btn--sm" data-run="/api/proof/admin" data-target="result-admin">Run</button>
+          </div>
+          <p class="t-muted">Returns an invented example message only when your server-set role is admin. Ordinary users get 403, unauthenticated callers get 401.</p>
+          <div class="result" id="result-admin" hidden>
+            <div><span class="badge" data-role="status">—</span></div>
+            <pre class="code" data-role="body"></pre>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
   </div>
 </main>
 
@@ -56,24 +126,93 @@
 // or this app's rules and this app's idea of who is signed in will drift apart.
 const $who = document.getElementById('who');
 const $in = document.getElementById('sign-in');
+const $inBody = document.getElementById('sign-in-body');
 const $out = document.getElementById('sign-out');
+const $empty = document.getElementById('identity-empty');
+const $detail = document.getElementById('identity-detail');
+const $name = document.getElementById('id-name');
+const $role = document.getElementById('id-role');
+
+function clearResults() {
+  document.querySelectorAll('.result').forEach((el) => { el.hidden = true; });
+}
 
 PBAuth.onChange((user) => {
   $in.hidden = !!user;
   $out.hidden = !user;
   $who.hidden = !user;
+  $empty.hidden = !!user;
+  $detail.hidden = !user;
+
+  // A result from the previous session says nothing about this one, and a stale 200
+  // sitting above a signed-out page is exactly the wrong thing for a test app to show.
+  clearResults();
+
   if (user) {
     $who.textContent = user.name || user.email;
     // PBAuth.isAdmin() is server-set from the grant, so it is safe to branch on for
-    // what to SHOW. What an admin may DO is still enforced by collection rules.
-    if (PBAuth.isAdmin()) $who.textContent += ' — admin';
+    // what to SHOW. What an admin may DO is still enforced on the server.
+    const admin = PBAuth.isAdmin();
+    if (admin) $who.textContent += ' — admin';
+    $name.textContent = user.name || user.email || '(no display name supplied)';
+    $role.textContent = admin ? 'admin' : 'user';
+    $role.className = admin ? 'badge badge--green' : 'badge';
   }
 });
 
-$in.addEventListener('click', () => PBAuth.signIn().catch((err) => {
-  console.error('[app] sign-in failed', err);
-}));
+function signIn() {
+  PBAuth.signIn().catch((err) => {
+    console.error('[app] sign-in failed', err);
+    GL.toast('Sign-in did not complete');
+  });
+}
+
+$in.addEventListener('click', signIn);
+$inBody.addEventListener('click', signIn);
 $out.addEventListener('click', () => PBAuth.signOut());
+
+// Call a route and report exactly what came back: the HTTP status and the body. No
+// interpretation, because the point of the app is to see the server's own answer.
+async function run(path, targetId, button) {
+  const box = document.getElementById(targetId);
+  const $status = box.querySelector('[data-role="status"]');
+  const $body = box.querySelector('[data-role="body"]');
+
+  button.disabled = true;
+  $status.className = 'badge';
+  $status.textContent = 'Running';
+  $body.textContent = '';
+  box.hidden = false;
+
+  const headers = {};
+  // Only send a token while the session is genuinely live. After a lapse the stored
+  // token is still there but no longer valid, and sending it would report a 401 that
+  // looks like a route problem rather than an expired session.
+  if (PBAuth.isSignedIn()) {
+    headers.Authorization = PBAuth.getClient().authStore.token;
+  }
+
+  try {
+    const res = await fetch(path, { headers: headers });
+    const text = await res.text();
+    let pretty = text;
+    try { pretty = JSON.stringify(JSON.parse(text), null, 2); } catch (err) { /* not JSON: show it raw */ }
+    $status.className = 'badge ' + (res.ok ? 'badge--green' : (res.status === 403 ? 'badge--amber' : 'badge--red'));
+    $status.textContent = 'HTTP ' + res.status + (res.ok ? ' allowed' : ' refused');
+    $body.textContent = pretty;
+  } catch (err) {
+    console.error('[app] request failed', err);
+    $status.className = 'badge badge--red';
+    $status.textContent = 'Request failed';
+    $body.textContent = String(err);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+document.querySelectorAll('[data-run]').forEach((button) => {
+  button.addEventListener('click', () => run(button.dataset.run, button.dataset.target, button));
+});
 </script>
 
 </body>
